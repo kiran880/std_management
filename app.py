@@ -4,6 +4,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 from urllib.parse import quote_plus
 import os
+from functools import wraps
+import time
 
 # Load environment variables
 load_dotenv()
@@ -17,9 +19,15 @@ DB_HOST = os.getenv('DB_HOST')
 DB_PORT = os.getenv('DB_PORT')
 DB_NAME = os.getenv('DB_NAME')
 
-# Configure PostgreSQL connection
+# Configure PostgreSQL connection with connection pooling
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_size': 10,
+    'pool_recycle': 3600,
+    'pool_pre_ping': True,
+    'pool_timeout': 30
+}
 app.secret_key = os.getenv('SECRET_KEY')
 
 db = SQLAlchemy(app)
@@ -54,18 +62,48 @@ class Student(db.Model):
 with app.app_context():
     db.create_all()
 
+# Rate limiting decorator
+def rate_limit(limit=30, per=60):
+    def decorator(f):
+        last_reset = time.time()
+        calls = 0
+        
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            nonlocal last_reset, calls
+            
+            now = time.time()
+            if now - last_reset > per:
+                calls = 0
+                last_reset = now
+                
+            calls += 1
+            if calls > limit:
+                time_to_wait = per - (now - last_reset)
+                if time_to_wait > 0:
+                    time.sleep(time_to_wait)
+                calls = 1
+                last_reset = time.time()
+                
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
 @app.route('/')
+@rate_limit(limit=30, per=60)  # Limit to 30 requests per minute
 def index():
     students = Student.query.all()
     return render_template('index.html', students=students)
 
 # School routes
 @app.route('/schools')
+@rate_limit(limit=30, per=60)
 def list_schools():
     schools = School.query.all()
     return render_template('schools/index.html', schools=schools)
 
 @app.route('/schools/add', methods=['GET', 'POST'])
+@rate_limit(limit=30, per=60)
 def add_school():
     if request.method == 'POST':
         name = request.form['name']
@@ -90,6 +128,7 @@ def add_school():
     return render_template('schools/add.html')
 
 @app.route('/schools/edit/<int:id>', methods=['GET', 'POST'])
+@rate_limit(limit=30, per=60)
 def edit_school(id):
     school = School.query.get_or_404(id)
     
@@ -110,6 +149,7 @@ def edit_school(id):
     return render_template('schools/edit.html', school=school)
 
 @app.route('/schools/delete/<int:id>')
+@rate_limit(limit=30, per=60)
 def delete_school(id):
     school = School.query.get_or_404(id)
     if school.students:
@@ -127,6 +167,7 @@ def delete_school(id):
 
 # Student routes
 @app.route('/add', methods=['GET', 'POST'])
+@rate_limit(limit=30, per=60)
 def add_student():
     schools = School.query.all()
     if request.method == 'POST':
@@ -166,6 +207,7 @@ def add_student():
     return render_template('add.html', schools=schools)
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
+@rate_limit(limit=30, per=60)
 def edit_student(id):
     student = Student.query.get_or_404(id)
     schools = School.query.all()
@@ -193,6 +235,7 @@ def edit_student(id):
     return render_template('edit.html', student=student, schools=schools)
 
 @app.route('/delete/<int:id>')
+@rate_limit(limit=30, per=60)
 def delete_student(id):
     student = Student.query.get_or_404(id)
     try:
