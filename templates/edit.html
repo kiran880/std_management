@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <h2>Edit Student</h2>
+        <form method="POST">
+            <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ student.name }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="roll_no" class="form-label">Roll Number</label>
+                <input type="text" class="form-control" id="roll_no" name="roll_no" value="{{ student.roll_no }}" readonly>
+            </div>
+            <div class="mb-3">
+                <label for="age" class="form-label">Age</label>
+                <input type="number" class="form-control" id="age" name="age" value="{{ student.age }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="gender" class="form-label">Gender</label>
+                <select class="form-control" id="gender" name="gender" required>
+                    <option value="">Select Gender</option>
+                    <option value="Male" {% if student.gender == 'Male' %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if student.gender == 'Female' %}selected{% endif %}>Female</option>
+                    <option value="Other" {% if student.gender == 'Other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="school_id" class="form-label">School</label>
+                <select class="form-control" id="school_id" name="school_id" required>
+                    <option value="">Select School</option>
+                    {% for school in schools %}
+                    <option value="{{ school.id }}" {% if student.school_id == school.id %}selected{% endif %}>{{ school.name }}</option>
+                    {% endfor %}
+                </select>
+                <small class="form-text text-muted">
+                    <a href="{{ url_for('add_school') }}" target="_blank">Add new school</a>
+                </small>
+            </div>
+            <div class="mb-3">
+                <label for="class_name" class="form-label">Class</label>
+                <select class="form-control" id="class_name" name="class_name" required>
+                    <option value="">Select Class</option>
+                    <option value="1st" {% if student.class_name == '1st' %}selected{% endif %}>1st</option>
+                    <option value="2nd" {% if student.class_name == '2nd' %}selected{% endif %}>2nd</option>
+                    <option value="3rd" {% if student.class_name == '3rd' %}selected{% endif %}>3rd</option>
+                    <option value="4th" {% if student.class_name == '4th' %}selected{% endif %}>4th</option>
+                    <option value="5th" {% if student.class_name == '5th' %}selected{% endif %}>5th</option>
+                    <option value="6th" {% if student.class_name == '6th' %}selected{% endif %}>6th</option>
+                    <option value="7th" {% if student.class_name == '7th' %}selected{% endif %}>7th</option>
+                    <option value="8th" {% if student.class_name == '8th' %}selected{% endif %}>8th</option>
+                    <option value="9th" {% if student.class_name == '9th' %}selected{% endif %}>9th</option>
+                    <option value="10th" {% if student.class_name == '10th' %}selected{% endif %}>10th</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="attendance" class="form-label">Attendance (%)</label>
+                <input type="number" class="form-control" id="attendance" name="attendance" value="{{ student.attendance }}" min="0" max="100" step="0.1" required>
+            </div>
+            <div class="mb-3">
+                <label for="grade" class="form-label">Grade</label>
+                <select class="form-control" id="grade" name="grade" required>
+                    <option value="">Select Grade</option>
+                    <option value="A+" {% if student.grade == 'A+' %}selected{% endif %}>A+</option>
+                    <option value="A" {% if student.grade == 'A' %}selected{% endif %}>A</option>
+                    <option value="B+" {% if student.grade == 'B+' %}selected{% endif %}>B+</option>
+                    <option value="B" {% if student.grade == 'B' %}selected{% endif %}>B</option>
+                    <option value="C" {% if student.grade == 'C' %}selected{% endif %}>C</option>
+                    <option value="D" {% if student.grade == 'D' %}selected{% endif %}>D</option>
+                    <option value="F" {% if student.grade == 'F' %}selected{% endif %}>F</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="phone" class="form-label">Phone</label>
+                <input type="tel" class="form-control" id="phone" name="phone" value="{{ student.phone }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="address" class="form-label">Address</label>
+                <textarea class="form-control" id="address" name="address" rows="3" required>{{ student.address }}</textarea>
+            </div>
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Update Student</button>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
