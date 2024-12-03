@@ -1,0 +1,17 @@
+name = "student-management-system"
+type = "webpack"
+account_id = "" # Your Cloudflare account ID
+workers_dev = true
+route = ""
+zone_id = "" # Your Cloudflare zone ID
+compatibility_date = "2023-01-01"
+
+[site]
+bucket = "./templates"
+entry-point = "workers-site"
+
+[env.production]
+name = "student-management-system-prod"
+
+[build]
+command = "pip install -r requirements.txt && python build.py"

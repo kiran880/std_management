@@ -1,0 +1,13 @@
+{
+  "name": "student-management-system",
+  "version": "1.0.0",
+  "description": "Student Management System with Flask and PostgreSQL",
+  "main": "index.js",
+  "scripts": {
+    "build": "python build.py",
+    "dev": "python app.py"
+  },
+  "dependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

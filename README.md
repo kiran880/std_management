@@ -91,3 +91,59 @@ student_management_system/
 - Modern Bootstrap components
 - User-friendly forms
 - Interactive data tables
+
+## Deployment to Cloudflare Pages
+
+1. Install Wrangler CLI:
+```bash
+npm install -g wrangler
+```
+
+2. Login to Cloudflare:
+```bash
+wrangler login
+```
+
+3. Configure your environment variables in Cloudflare Pages:
+- Go to your Cloudflare Dashboard
+- Navigate to Pages
+- Select your project
+- Go to Settings > Environment Variables
+- Add the following variables:
+  - DB_USER
+  - DB_PASSWORD
+  - DB_HOST
+  - DB_PORT
+  - DB_NAME
+  - SECRET_KEY
+
+4. Deploy your application:
+```bash
+wrangler deploy
+```
+
+Your application will be available at: `https://your-project-name.pages.dev`
+
+## Database Setup
+
+1. Create a PostgreSQL database on your preferred provider
+2. Update the environment variables with your database credentials
+3. The application will automatically create the required tables on first run
+
+## Troubleshooting
+
+If you encounter any issues:
+
+1. Check your environment variables in Cloudflare Pages
+2. Verify database connection settings
+3. Check the deployment logs in Cloudflare Pages dashboard
+4. Ensure all dependencies are properly listed in requirements.txt
+
+For local development, use:
+```bash
+python app.py
+```
+
+For production deployment:
+```bash
+wrangler deploy
