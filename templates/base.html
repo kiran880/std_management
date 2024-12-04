@@ -273,6 +273,28 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-analytics.js"></script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.x.x/firebase-analytics.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAlnYwnMpwYDAbYEF4jM5Au7fI1sYKzLKE",
+            authDomain: "st-dbs.firebaseapp.com",
+            projectId: "st-dbs",
+            storageBucket: "st-dbs.firebasestorage.app",
+            messagingSenderId: "1005819510745",
+            appId: "1:1005819510745:web:f8ce8b7eae06b3202b23c8",
+            measurementId: "G-0E0299808Y"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+    </script>
     <script>
         // Theme toggle functionality
         const themeToggle = document.getElementById('themeToggle');
