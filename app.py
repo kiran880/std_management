@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from dotenv import load_dotenv
@@ -6,30 +6,47 @@ from urllib.parse import quote_plus
 import os
 from functools import wraps
 import time
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
 
+# Set secret key from environment variable or use a default one
+app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')
+
+# Rate limiter configuration
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
+
 # PostgreSQL Database Configuration
-DB_USER = os.getenv('DB_USER')
-DB_PASSWORD = quote_plus(os.getenv('DB_PASSWORD'))
-DB_HOST = os.getenv('DB_HOST')
-DB_PORT = os.getenv('DB_PORT')
-DB_NAME = os.getenv('DB_NAME')
+DB_USER = "postgres"
+DB_PASSWORD = quote_plus("Kiran2001")
+DB_HOST = "st-dbs.cnaekug4ubwz.eu-north-1.rds.amazonaws.com"
+DB_NAME = "postgres"
+DB_PORT = "5432"
 
-# Configure PostgreSQL connection with connection pooling
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+print("\nDatabase Configuration:")
+print(f"Host: {DB_HOST}")
+print(f"Port: {DB_PORT}")
+print(f"Database: {DB_NAME}")
+print(f"User: {DB_USER}")
+
+# Configure SQLAlchemy with AWS RDS
+DATABASE_URL = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_size': 10,
-    'pool_recycle': 3600,
-    'pool_pre_ping': True,
-    'pool_timeout': 30
-}
-app.secret_key = os.getenv('SECRET_KEY')
+app.config['SQLALCHEMY_ECHO'] = True
 
+print(f"\nConnecting to database: {DATABASE_URL.replace(DB_PASSWORD, '****')}")
+
+# Initialize SQLAlchemy
 db = SQLAlchemy(app)
 
 class School(db.Model):
@@ -58,9 +75,17 @@ class Student(db.Model):
     class_name = db.Column(db.String(10), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Create tables
+# Create all database tables
 with app.app_context():
-    db.create_all()
+    try:
+        print("\nDropping existing tables if any...")
+        db.drop_all()
+        print("Creating fresh database tables in AWS RDS...")
+        db.create_all()
+        print("Database tables created successfully in AWS RDS!")
+    except Exception as e:
+        print(f"Error creating tables: {e}")
+        raise e
 
 # Rate limiting decorator
 def rate_limit(limit=30, per=60):
@@ -90,20 +115,20 @@ def rate_limit(limit=30, per=60):
     return decorator
 
 @app.route('/')
-@rate_limit(limit=30, per=60)  # Limit to 30 requests per minute
+@limiter.limit("10 per minute")
 def index():
     students = Student.query.all()
     return render_template('index.html', students=students)
 
 # School routes
 @app.route('/schools')
-@rate_limit(limit=30, per=60)
+@limiter.limit("10 per minute")
 def list_schools():
     schools = School.query.all()
     return render_template('schools/index.html', schools=schools)
 
 @app.route('/schools/add', methods=['GET', 'POST'])
-@rate_limit(limit=30, per=60)
+@limiter.limit("10 per minute")
 def add_school():
     if request.method == 'POST':
         name = request.form['name']
@@ -128,7 +153,7 @@ def add_school():
     return render_template('schools/add.html')
 
 @app.route('/schools/edit/<int:id>', methods=['GET', 'POST'])
-@rate_limit(limit=30, per=60)
+@limiter.limit("10 per minute")
 def edit_school(id):
     school = School.query.get_or_404(id)
     
@@ -149,7 +174,7 @@ def edit_school(id):
     return render_template('schools/edit.html', school=school)
 
 @app.route('/schools/delete/<int:id>')
-@rate_limit(limit=30, per=60)
+@limiter.limit("10 per minute")
 def delete_school(id):
     school = School.query.get_or_404(id)
     if school.students:
@@ -167,7 +192,7 @@ def delete_school(id):
 
 # Student routes
 @app.route('/add', methods=['GET', 'POST'])
-@rate_limit(limit=30, per=60)
+@limiter.limit("10 per minute")
 def add_student():
     schools = School.query.all()
     if request.method == 'POST':
@@ -207,7 +232,7 @@ def add_student():
     return render_template('add.html', schools=schools)
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
-@rate_limit(limit=30, per=60)
+@limiter.limit("10 per minute")
 def edit_student(id):
     student = Student.query.get_or_404(id)
     schools = School.query.all()
@@ -235,7 +260,7 @@ def edit_student(id):
     return render_template('edit.html', student=student, schools=schools)
 
 @app.route('/delete/<int:id>')
-@rate_limit(limit=30, per=60)
+@limiter.limit("10 per minute")
 def delete_student(id):
     student = Student.query.get_or_404(id)
     try:
@@ -246,6 +271,16 @@ def delete_student(id):
         db.session.rollback()
         flash('Error deleting student.', 'error')
     return redirect(url_for('index'))
+
+@app.route('/test-db')
+def test_db():
+    try:
+        # Test database connection
+        schools_count = School.query.count()
+        students_count = Student.query.count()
+        return f"Database connection successful! Current data: {schools_count} schools, {students_count} students"
+    except Exception as e:
+        return f"Database Error: {str(e)}"
 
 if __name__ == '__main__':
     app.run(debug=True)
